@@ -315,17 +315,24 @@ router.delete("/:item/comments/:comment", auth.required, function(
   res,
   next
 ) {
+  if (req.comment.item.toString() !== req.item._id.toString()) {
+    return res.sendStatus(404);
+  }
+  if (req.comment.seller.toString() !== req.payload.id.toString()) {
+    return res.sendStatus(403);
+  }
   req.item.comments.remove(req.comment._id);
-  req.item
+  return req.item
     .save()
-    .then(
-      Comment.find({ _id: req.comment._id })
+    .then(function() {
+      return Comment.find({ _id: req.comment._id })
         .remove()
-        .exec()
-    )
+        .exec();
+    })
     .then(function() {
       res.sendStatus(204);
-    });
+    })
+    .catch(next);
 });
 
 module.exports = router;
